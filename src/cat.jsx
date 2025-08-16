@@ -5,11 +5,11 @@ const CateringInventorySystem = () => {
   // Sample dishes with their material requirements
   const [dishes] = useState({
     'Biriyani': {
-      'kaima Rice': 0.2, // kg per serving
-      'Chicken': 0.15,
-      'Onions': 0.05,
-      'Spices Mix': 0.01,
-      'Ghee': 0.02,
+      'kaima Rice': 1, // kg per serving
+      'Chicken': 1,
+      'Onions': 0.5,
+      'Tomato': 0.25,
+      'Ghee': 0.1,
       'Yogurt': 0.03
     },
     'Fish Curry': {
