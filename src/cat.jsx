@@ -5,11 +5,11 @@ const CateringInventorySystem = () => {
   // Sample dishes with their material requirements
   const [dishes] = useState({
     'Biriyani': {
-      'kaima Rice': 1, // kg per serving
-      'Chicken': 1,
-      'Onions': 0.5,
-      'Tomato': 0.25,
-      'Ghee': 0.1,
+      'Basmati Rice': 0.2, // kg per serving
+      'Chicken': 0.15,
+      'Onions': 0.05,
+      'Spices Mix': 0.01,
+      'Ghee': 0.02,
       'Yogurt': 0.03
     },
     'Fish Curry': {
@@ -87,6 +87,15 @@ const CateringInventorySystem = () => {
     }
   };
 
+  // Remove dish completely
+  const removeDish = (dish) => {
+    setSelectedDishes(prev => {
+      const newDishes = { ...prev };
+      delete newDishes[dish];
+      return newDishes;
+    });
+  };
+
   // Add or update dish quantity
   const updateDishQuantity = (dish, quantity) => {
     if (quantity <= 0) {
@@ -127,6 +136,280 @@ const CateringInventorySystem = () => {
 
   const totalDishes = Object.values(selectedDishes).reduce((sum, qty) => sum + qty, 0);
   const totalShortageItems = Object.keys(shortage).length;
+
+  // Export shopping list as PDF
+  const exportShoppingListToPDF = () => {
+    if (totalShortageItems === 0) {
+      alert('No items to export. Shopping list is empty!');
+      return;
+    }
+
+    const currentDate = new Date().toLocaleDateString('en-IN');
+    const currentTime = new Date().toLocaleTimeString('en-IN');
+    
+    // Create HTML content for PDF
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Kerala Catering Service - Shopping List</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 30px; 
+      color: #333;
+      line-height: 1.4;
+      background: white;
+    }
+    .header { 
+      text-align: center; 
+      margin-bottom: 25px; 
+      border-bottom: 2px solid #e97317;
+      padding-bottom: 15px;
+    }
+    .company-name { 
+      font-size: 28px; 
+      font-weight: bold; 
+      color: #ea580c;
+      margin-bottom: 8px;
+    }
+    .subtitle { 
+      font-size: 16px; 
+      color: #666; 
+      margin-bottom: 8px;
+    }
+    .date-info { 
+      font-size: 12px; 
+      color: #888; 
+    }
+    .summary { 
+      background: #fef2f2; 
+      padding: 20px; 
+      border-radius: 8px; 
+      margin: 25px 0;
+      border-left: 5px solid #dc2626;
+    }
+    .summary-title { 
+      font-size: 18px; 
+      font-weight: bold; 
+      color: #dc2626; 
+      margin-bottom: 15px;
+    }
+    .summary-grid { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 12px;
+      font-size: 14px;
+    }
+    .summary-item {
+      padding: 5px 0;
+    }
+    .dishes-section {
+      margin: 25px 0;
+      background: #fef7ed;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 5px solid #ea580c;
+    }
+    .dishes-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ea580c;
+      margin-bottom: 15px;
+    }
+    .dish-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .dish-item {
+      padding: 8px;
+      background: white;
+      border-radius: 4px;
+    }
+    .dish-name {
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+    }
+    .dish-qty {
+      color: #666;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin: 25px 0;
+      font-size: 14px;
+    }
+    th { 
+      background: #ea580c; 
+      color: white; 
+      padding: 12px 8px; 
+      text-align: left;
+      font-weight: bold;
+    }
+    td { 
+      padding: 10px 8px; 
+      border-bottom: 1px solid #ddd;
+    }
+    tr:nth-child(even) { 
+      background: #f9f9f9;
+    }
+    .shortage-qty { 
+      font-weight: bold; 
+      color: #dc2626;
+    }
+    .footer { 
+      margin-top: 30px; 
+      text-align: center; 
+      font-size: 11px; 
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+    .print-btn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      z-index: 1000;
+    }
+    .print-btn:hover {
+      background: #b91c1c;
+    }
+    @media print {
+      .print-btn { display: none; }
+      body { padding: 15px; }
+      .header { margin-bottom: 20px; padding-bottom: 10px; }
+      .summary, .dishes-section { margin: 15px 0; padding: 15px; }
+      table { margin: 15px 0; }
+      .footer { margin-top: 20px; padding-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">📄 Save as PDF</button>
+  
+  <div class="header">
+    <div class="company-name">Kerala Catering Service</div>
+    <div class="subtitle">Shopping List - Material Purchase Requirements</div>
+    <div class="date-info">Generated on: ${currentDate} at ${currentTime}</div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-title">📋 Order Summary</div>
+    <div class="summary-grid">
+      <div class="summary-item"><strong>Items to Purchase:</strong> ${totalShortageItems} items</div>
+      <div class="summary-item"><strong>Total Servings:</strong> ${totalDishes} servings</div>
+      <div class="summary-item"><strong>Dish Varieties:</strong> ${Object.keys(selectedDishes).length}</div>
+      <div class="summary-item"><strong>Status:</strong> Ready for Purchase</div>
+    </div>
+  </div>
+
+  ${Object.keys(selectedDishes).length > 0 ? `
+  <div class="dishes-section">
+    <div class="dishes-title">🍽️ Dishes Being Prepared</div>
+    <div class="dish-grid">
+      ${Object.entries(selectedDishes).map(([dish, qty]) => `
+        <div class="dish-item">
+          <div class="dish-name">${dish}</div>
+          <div class="dish-qty">${qty} servings</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  ` : ''}
+
+  <div style="margin: 25px 0;">
+    <h3 style="color: #dc2626; margin-bottom: 15px; font-size: 18px;">🛒 Shopping List</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Material Name</th>
+          <th>Required (kg)</th>
+          <th>In Stock (kg)</th>
+          <th>Need to Buy (kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${Object.entries(shortage).map(([material, shortageQty]) => {
+          const required = materialRequirements[material];
+          const available = currentStock[material] || 0;
+          return `
+            <tr>
+              <td><strong>${material}</strong></td>
+              <td>${required.toFixed(2)}</td>
+              <td>${available.toFixed(2)}</td>
+              <td class="shortage-qty">${shortageQty.toFixed(2)}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p><strong>Kerala Catering Service Inventory Management System</strong></p>
+    <p>📞 Contact kitchen manager for any queries | ✅ Please verify quantities before purchasing</p>
+    <p style="margin-top: 5px; font-size: 10px;">Document generated automatically on ${currentDate} ${currentTime}</p>
+  </div>
+
+  <script>
+    // Auto-focus and show instructions
+    window.onload = function() {
+      setTimeout(() => {
+        alert('PDF ready! Click the "📄 Save as PDF" button in the top-right corner, or press Ctrl+P (Cmd+P on Mac) to save as PDF.');
+      }, 500);
+    }
+    
+    // Add keyboard shortcut
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        window.print();
+      }
+    });
+  </script>
+</body>
+</html>`;
+
+    // Create and open the PDF window
+    const pdfWindow = window.open('', '_blank', 'width=800,height=900');
+    
+    if (pdfWindow) {
+      pdfWindow.document.write(htmlContent);
+      pdfWindow.document.close();
+      pdfWindow.focus();
+      
+      console.log('PDF window opened successfully');
+    } else {
+      // Fallback for popup blockers
+      alert('Please allow popups for this site to export PDF, or try again.');
+      
+      // Alternative: create downloadable HTML file
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Kerala_Catering_Shopping_List_${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('PDF export window blocked. Downloaded HTML file instead - open it in browser and print as PDF.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4">
@@ -316,8 +599,12 @@ const CateringInventorySystem = () => {
                   ))}
                 </div>
 
-                <button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
-                  Export Shopping List
+                <button 
+                  onClick={exportShoppingListToPDF}
+                  className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Export Shopping List as PDF
                 </button>
               </>
             )}
