@@ -12,11 +12,7 @@ const DISH_RECIPES = {
     'Puttu': { 'Rice Flour': 0.1, 'Coconut': 0.03, 'Salt': 0.001 }
 };
 
-const INITIAL_STOCK = {
-    'Basmati Rice': 5, 'Chicken': 4, 'Fish': 3, 'Onions': 3, 'Tomatoes': 2, 'Coconut': 8, 'Spices Mix': 6, 'Ghee': 1, 'Yogurt': 1,
-    'Coconut Oil': 8, 'Toor Dal': 15, 'Vegetables': 25, 'Tamarind': 3, 'Curry Leaves': 2, 'Rasam Powder': 1.5, 'Rice Flour': 20,
-    'Coconut Milk': 10, 'Yeast': 0.5, 'Sugar': 15, 'Salt': 5
-};
+
 
 // --- Child Components ---
 
@@ -344,13 +340,37 @@ const SummaryCards = ({ requirements, shortage, selectedDishes }) => {
 
 const CateringInventorySystem = () => {
     const [dishes] = useState(DISH_RECIPES);
-    const [currentStock, setCurrentStock] = useState(INITIAL_STOCK);
+    const [currentStock, setCurrentStock] = useState({});
     const [selectedDishes, setSelectedDishes] = useState({});
     const [materialRequirements, setMaterialRequirements] = useState({});
     const [shortage, setShortage] = useState({});
     const [isPdfLibReady, setIsPdfLibReady] = useState(false);
     const [isStockModalOpen, setIsStockModalOpen] = useState(false);
     const [notification, setNotification] = useState('');
+
+    // NEW: useEffect to fetch stock from your Tally middleware
+    useEffect(() => {
+    const fetchStock = async () => {
+        try {
+            // This URL points to the Node.js server we created
+            const response = await fetch('http://localhost:3001/api/stock');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            setCurrentStock(data); // <-- The magic happens here!
+            setNotification('Successfully loaded stock from Tally.');
+            setTimeout(() => setNotification(''), 3000);
+        } catch (error) {
+            console.error("Failed to fetch stock from Tally:", error);
+            setNotification('Error: Could not connect to Tally middleware.');
+            setTimeout(() => setNotification(''), 5000);
+        }
+    };
+
+    fetchStock();
+}, []); // The empty array [] means this effect runs only once
+
 
     // Effect to dynamically load PDF generation scripts
     useEffect(() => {
